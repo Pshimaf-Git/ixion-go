@@ -7,11 +7,11 @@ import (
 )
 
 func main() {
-	input := []rune("print(a + b);")
+	input := []rune("var a;\n\n\n\tprint (a+b)*c")
 	l := lexer.New(input)
 	res, err := l.Tokenize()
 	if err != nil {
-		log.Fatalf(err.Error())
+		log.Fatal(err.Error())
 	}
 
 	fmt.Println(res)
