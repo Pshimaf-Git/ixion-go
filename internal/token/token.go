@@ -12,6 +12,9 @@ const (
 	DIV
 	MUL
 
+	RBRACE
+	LBRACE
+
 	LPAREN
 	RPAREN
 
@@ -19,6 +22,8 @@ const (
 
 	SEMICOLON
 
+	FN
+	FOR
 	VAR
 	CONST
 	PRINT
@@ -32,6 +37,9 @@ var tokenTypes = [...]string{
 	DIV:   "DIV",
 	MUL:   "MUL",
 
+	RBRACE: "RBRACE",
+	LBRACE: "LBRACE",
+
 	LPAREN: "LPAREN",
 	RPAREN: "RPAREN",
 
@@ -39,6 +47,8 @@ var tokenTypes = [...]string{
 
 	SEMICOLON: "SEMICOLON",
 
+	FN:    "FN",
+	FOR:   "FOR",
 	VAR:   "VAR",
 	CONST: "CONST",
 	PRINT: "PRINT",
@@ -48,6 +58,8 @@ var keywords = map[string]TokenType{
 	"const": CONST,
 	"var":   VAR,
 	"print": PRINT,
+	"fn":    FN,
+	"for":   FOR,
 }
 
 var operators = map[rune]TokenType{
@@ -60,6 +72,8 @@ var operators = map[rune]TokenType{
 	';': SEMICOLON,
 	'(': LPAREN,
 	')': RPAREN,
+	'{': LBRACE,
+	'}': RBRACE,
 }
 
 func (tt TokenType) String() string {
