@@ -1,47 +1,36 @@
 package lexer
 
 import (
+	"ixion/internal/token"
 	"strings"
 	"unicode"
 )
 
 type Lexer struct {
 	input         []rune
+	tokens        *token.Tokens
 	pos, row, col int
 }
 
-var (
-	Keywords = map[string]TokenType{
-		"var":   VAR_KEYWORD,
-		"const": CONST_KEYWORD,
-		"print": PRINT_KEYWORD,
-	}
-
-	Operators = []rune{
-		'+', '-', '*', '/', '(', ')', ';',
-	}
-)
-
-var tokens []Token
-
 func New(in []rune) *Lexer {
-
 	return &Lexer{
-		input: in,
-		pos:   0,
-		row:   1,
-		col:   1,
+		input:  in,
+		tokens: token.NewTokens(),
+		pos:    0,
+		row:    1,
+		col:    1,
 	}
 }
 
-func Tokenize(in string) ([]Token, error) {
+func Tokenize(in string) (*token.Tokens, error) {
 	lexer := Lexer{
-		input: []rune(in),
+		input:  []rune(in),
+		tokens: token.NewTokens(),
 	}
 	return lexer.Tokenize()
 }
 
-func (l *Lexer) Tokenize() ([]Token, error) {
+func (l *Lexer) Tokenize() (*token.Tokens, error) {
 	var currentChar rune
 
 	for l.pos < len(l.input) {
@@ -56,28 +45,19 @@ func (l *Lexer) Tokenize() ([]Token, error) {
 			l.tokenizeWord()
 		} else if currentChar == '\000' {
 			break
-		} else if l.isOperator(currentChar) {
-			operatorTypes := map[rune]TokenType{
-				'+': PLUS,
-				'-': MINUS,
-				'*': MUL,
-				'/': DIV,
-				'(': LPAREN,
-				')': RPAREN,
-				';': SEMICOLON,
-			}
-
-			if tokenType, exists := operatorTypes[currentChar]; exists {
+		} else if _, ok := token.IsOperator(currentChar); ok {
+			if tokenType, ok := token.IsOperator(currentChar); ok {
 				l.makeToken(tokenType, string(currentChar))
 				currentChar = l.next()
 			} else {
-				return nil, &LexerError{Kind: Default, Message: "invalid operator"}
+				return nil, newError(InvalidOperator, string(currentChar))
 			}
 		} else {
-			return nil, &LexerError{Kind: Default, Message: "unexpected character"}
+			return nil, newError(UnexpectedCharacter, string(currentChar))
 		}
 	}
-	return tokens, nil
+
+	return l.tokens, nil
 }
 
 func (l *Lexer) tokenizeWord() {
@@ -90,27 +70,15 @@ func (l *Lexer) tokenizeWord() {
 		currentChar = l.next()
 	}
 	word := buffer.String()
-	if tokenType, exists := Keywords[word]; exists {
+	if tokenType, ok := token.IsKeyword(word); ok {
 		l.makeToken(tokenType, "")
 	} else {
-		l.makeToken(IDENTIFIER, word)
+		l.makeToken(token.IDENT, word)
 	}
 }
 
-func (l *Lexer) isOperator(target rune) bool {
-	for _, r := range Operators {
-		if r == target {
-			return true
-		}
-	}
-	return false
-}
-
-func (l *Lexer) makeToken(typo TokenType, text string) {
-	tokens = append(tokens, Token{
-		TypeOfToken: typo,
-		Text:        text,
-	})
+func (l *Lexer) makeToken(_type token.TokenType, text string) {
+	l.tokens.Append(token.New(_type, text))
 }
 
 func (l *Lexer) skip() {
