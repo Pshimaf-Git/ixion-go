@@ -33,6 +33,7 @@ func Tokenize(in string) (*token.Tokens, error) {
 func (l *Lexer) Tokenize() (*token.Tokens, error) {
 	var currentChar rune
 
+LOOP:
 	for l.pos < len(l.input) {
 
 		for unicode.IsSpace(l.peek(0)) {
@@ -41,18 +42,16 @@ func (l *Lexer) Tokenize() (*token.Tokens, error) {
 
 		currentChar = l.peek(0)
 
-		if unicode.IsLetter(currentChar) {
+		switch {
+		case unicode.IsLetter(currentChar):
 			l.tokenizeWord()
-		} else if currentChar == '\000' {
-			break
-		} else if _, ok := token.IsOperator(currentChar); ok {
-			if tokenType, ok := token.IsOperator(currentChar); ok {
-				l.makeToken(tokenType, string(currentChar))
-				currentChar = l.next()
-			} else {
-				return nil, newError(InvalidOperator, string(currentChar))
-			}
-		} else {
+		case currentChar == '\000':
+			break LOOP
+		case l.isOperator(currentChar):
+			tokenType, _ := token.IsOperator(currentChar)
+			l.makeToken(tokenType, string(currentChar))
+			currentChar = l.next()
+		default:
 			return nil, newError(UnexpectedCharacter, string(currentChar))
 		}
 	}
@@ -75,6 +74,11 @@ func (l *Lexer) tokenizeWord() {
 	} else {
 		l.makeToken(token.IDENT, word)
 	}
+}
+
+func (l *Lexer) isOperator(char rune) bool {
+	_, ok := token.IsOperator(char)
+	return ok
 }
 
 func (l *Lexer) makeToken(_type token.TokenType, text string) {
