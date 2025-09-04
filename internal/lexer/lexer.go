@@ -36,15 +36,11 @@ func (l *Lexer) Tokenize() (*token.Tokens, error) {
 LOOP:
 	for l.pos < len(l.input) {
 
-		for unicode.IsSpace(l.peek(0)) {
-			l.skip()
-		}
+		l.skipWhiteSpace()
 
 		currentChar = l.peek(0)
 
 		switch {
-		case unicode.IsDigit(currentChar) || currentChar == '"':
-			l.tokenizeLiteral()
 		case unicode.IsLetter(currentChar):
 			l.tokenizeWord()
 		case currentChar == '\000':
@@ -53,6 +49,8 @@ LOOP:
 			tokenType, _ := token.IsOperator(currentChar)
 			l.makeToken(tokenType, string(currentChar))
 			currentChar = l.next()
+		case unicode.IsDigit(currentChar) || currentChar == '"':
+			l.tokenizeLiteral()
 		default:
 			return nil, newError(UnexpectedCharacter, string(currentChar))
 		}
@@ -66,16 +64,16 @@ func (l *Lexer) tokenizeWord() {
 	buffer.WriteRune(l.peek(0))
 	currentChar := l.next()
 
-	for unicode.IsLetter(currentChar) {
+	for unicode.IsLetter(currentChar) || unicode.IsDigit(currentChar) {
 		buffer.WriteRune(currentChar)
 		currentChar = l.next()
 	}
 	word := buffer.String()
 
 	if tokenType, ok := token.IsKeyword(word); ok {
-		l.makeToken(tokenType, "")
+		l.makeToken(tokenType, tokenType.String())
 	} else if tokenType, ok := token.IsLangType(word); ok {
-		l.makeToken(tokenType, "")
+		l.makeToken(tokenType, tokenType.String())
 	} else {
 		l.makeToken(token.IDENT, word)
 	}
@@ -88,11 +86,19 @@ func (l *Lexer) tokenizeLiteral() {
 
 	switch {
 	case unicode.IsDigit(currentChar):
-		for unicode.IsDigit(currentChar) {
+		for unicode.IsDigit(currentChar) && currentChar != '\000' {
 			buff.WriteRune(currentChar)
 			currentChar = l.next()
 		}
 		l.makeToken(token.NUMBER_LITERAL, buff.String())
+	case currentChar == '"':
+		currentChar = l.next()
+		for currentChar != '"' && currentChar != '\000' {
+			buff.WriteRune(currentChar)
+			currentChar = l.next()
+		}
+		l.incPos()
+		l.makeToken(token.STRING_LITERAL, buff.String())
 	}
 }
 
@@ -105,24 +111,33 @@ func (l *Lexer) makeToken(_type token.TokenType, text string) {
 	l.tokens.Append(token.New(_type, text))
 }
 
-func (l *Lexer) skip() {
+func (l *Lexer) skipWhiteSpace() {
+	for l.pos < len(l.input) && unicode.IsSpace(l.input[l.pos]) {
+		l.incPos()
+	}
+}
+
+func (l *Lexer) next() rune {
+	if l.pos >= len(l.input) {
+		return '\000'
+	}
+
+	l.incPos()
+	return l.peek(0)
+}
+
+func (l *Lexer) incPos() {
 	if l.pos >= len(l.input) {
 		return
 	}
-	result := l.input[l.pos]
 
-	if result == '\n' {
+	if l.input[l.pos] == '\n' {
 		l.row++
 		l.col = 1
 	} else {
 		l.col++
 	}
 	l.pos++
-}
-
-func (l *Lexer) next() rune {
-	l.skip()
-	return l.peek(0)
 }
 
 func (l *Lexer) peek(currentPos int) rune {
