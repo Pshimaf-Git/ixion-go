@@ -7,6 +7,11 @@ import (
 )
 
 const code string = `
+	fn myfunc(a int) int {
+		var res = (a + 12) / 2;
+		return res;
+	}
+
 	var foo uint8 = 0;
 	var bar = "\tTab\nNewLine";
 
@@ -15,6 +20,7 @@ const code string = `
 	print foo;
 	print bar;
 	print "Hello, world";
+	print myfunc(foo);
 `
 
 func main() {
