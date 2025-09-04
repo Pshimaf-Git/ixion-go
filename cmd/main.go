@@ -6,8 +6,19 @@ import (
 	"log"
 )
 
+const code string = `
+	var foo uint8 = 0;
+	var bar = "\tTab\nNewLine";
+
+	foo = (foo + 1000) * (12 - 1) / 3;
+
+	print foo;
+	print bar;
+	print "Hello, world";
+`
+
 func main() {
-	input := []rune("var a;\n\n\n\tprint (a+b)*c")
+	input := []rune(code)
 	l := lexer.New(input)
 	res, err := l.Tokenize()
 	if err != nil {
