@@ -43,6 +43,8 @@ LOOP:
 		currentChar = l.peek(0)
 
 		switch {
+		case unicode.IsDigit(currentChar) || currentChar == '"':
+			l.tokenizeLiteral()
 		case unicode.IsLetter(currentChar):
 			l.tokenizeWord()
 		case currentChar == '\000':
@@ -69,10 +71,28 @@ func (l *Lexer) tokenizeWord() {
 		currentChar = l.next()
 	}
 	word := buffer.String()
+
 	if tokenType, ok := token.IsKeyword(word); ok {
+		l.makeToken(tokenType, "")
+	} else if tokenType, ok := token.IsLangType(word); ok {
 		l.makeToken(tokenType, "")
 	} else {
 		l.makeToken(token.IDENT, word)
+	}
+}
+
+func (l *Lexer) tokenizeLiteral() {
+	var buff strings.Builder
+
+	currentChar := l.peek(0)
+
+	switch {
+	case unicode.IsDigit(currentChar):
+		for unicode.IsDigit(currentChar) {
+			buff.WriteRune(currentChar)
+			currentChar = l.next()
+		}
+		l.makeToken(token.NUMBER_LITERAL, buff.String())
 	}
 }
 
