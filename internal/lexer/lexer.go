@@ -1,6 +1,7 @@
 package lexer
 
 import (
+	"fmt"
 	"ixion/internal/token"
 	"strings"
 	"unicode"
@@ -52,7 +53,7 @@ LOOP:
 		case unicode.IsDigit(currentChar) || currentChar == '"':
 			l.tokenizeLiteral()
 		default:
-			return nil, newError(UnexpectedCharacter, string(currentChar))
+			return nil, l.createError(UnexpectedCharacter, string(currentChar))
 		}
 	}
 
@@ -79,7 +80,7 @@ func (l *Lexer) tokenizeWord() {
 	}
 }
 
-func (l *Lexer) tokenizeLiteral() {
+func (l *Lexer) tokenizeLiteral() error {
 	var buff strings.Builder
 
 	currentChar := l.peek(0)
@@ -97,9 +98,16 @@ func (l *Lexer) tokenizeLiteral() {
 			buff.WriteRune(currentChar)
 			currentChar = l.next()
 		}
+
+		if currentChar == '\000' {
+			return l.createError(UnclosedStringLiteral, "string literal must be closed")
+		}
+
 		l.incPos()
 		l.makeToken(token.STRING_LITERAL, buff.String())
 	}
+
+	return nil
 }
 
 func (l *Lexer) isOperator(char rune) bool {
@@ -146,4 +154,8 @@ func (l *Lexer) peek(currentPos int) rune {
 		return '\000'
 	}
 	return l.input[finalPos]
+}
+
+func (l *Lexer) createError(kind LexerErrorKind, msg string) error {
+	return newError(kind, fmt.Sprintf("%d:%d", l.row, l.col), msg)
 }
