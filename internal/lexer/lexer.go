@@ -2,9 +2,10 @@ package lexer
 
 import (
 	"fmt"
-	"ixion/internal/token"
 	"strings"
 	"unicode"
+
+	"ixion/internal/token"
 )
 
 type Lexer struct {
@@ -51,7 +52,9 @@ LOOP:
 			l.makeToken(tokenType, string(currentChar))
 			currentChar = l.next()
 		case unicode.IsDigit(currentChar) || currentChar == '"':
-			l.tokenizeLiteral()
+			if err := l.tokenizeLiteral(); err != nil {
+				return nil, err
+			}
 		default:
 			return nil, l.createError(UnexpectedCharacter, string(currentChar))
 		}
