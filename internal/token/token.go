@@ -47,8 +47,10 @@ func WithMeta(_type TokenType, text string, meta any) Token {
 
 type Tokens []Token
 
-func NewTokens() *Tokens {
-	return new(Tokens)
+func NewTokens(tokens ...Token) *Tokens {
+	out := make(Tokens, len(tokens))
+	copy(out, tokens)
+	return &out
 }
 
 func (t *Tokens) String() string {
