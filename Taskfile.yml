@@ -1,0 +1,41 @@
+# https://taskfile.dev
+
+version: '3'
+
+vars:
+  OUTPUT: ".out/ixion"
+  GO_COMPILER: "go"
+  GO_FLAGS: ""
+  MAIN_FILE: "cmd/main.go"
+
+tasks:
+  build:
+    cmds:
+      - "{{.GO_COMPILER}} build {{.GO_FLAGS}} -o {{.OUTPUT}} {{.MAIN_FILE}}"
+
+  run:
+    cmds:
+      - "{{.GO_COMPILER}} run {{.GO_FLAGS}} {{.MAIN_FILE}}"
+
+  brun:
+    cmds:
+      - "{{.OUTPUT}}"
+
+  clean:
+    cmds:
+      - "rm -rf {{.OUTPUT}}"
+
+  build-run:
+    cmds:
+      - task: build
+      - task: brun
+
+  help:
+    cmds:
+      - |
+        echo "Commands:"
+        echo "  task build     - build app in {{.OUTPUT}}"
+        echo "  task run       - run app"
+        echo "  task build-run - build and run app"
+        echo "  task clean     - delete result of compilation"
+        echo "  task help      - show this help message"
