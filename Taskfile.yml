@@ -1,6 +1,6 @@
 # https://taskfile.dev
 
-version: '3'
+version: "3"
 
 vars:
   OUTPUT: ".out/ixion"
@@ -9,6 +9,11 @@ vars:
   MAIN_FILE: "cmd/main.go"
 
 tasks:
+  default:
+    cmds:
+      - task: build
+      - task: brun
+
   build:
     cmds:
       - "{{.GO_COMPILER}} build {{.GO_FLAGS}} -o {{.OUTPUT}} {{.MAIN_FILE}}"
