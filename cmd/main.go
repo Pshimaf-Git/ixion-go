@@ -1,46 +1,44 @@
 package main
 
 import (
-	"errors"
+	"encoding/json"
 	"fmt"
-	"log"
 
 	"ixion/internal/lexer"
 	"ixion/internal/parser"
 )
 
+// Example code
 const code string = `
-	fn myfunc(a int) int {
+	fn f(a int) int {
 		var res = (a + 12) / 2;
 		return res;
 	}
 
+	var funcLit = fn(a int) int {return a + 1}
+
 	var foo uint8 = 0;
-	var bar = "\tTab\nNewLine";
+	var bar string = "\tTab\nNewLine";
 
 	foo = (foo + 1000) * (12 - 1) / 3;
 
 	print(foo);
 	print(bar);
 	print("Hello, world");
-	print(myfunc(foo););
+	print(myfunc(foo));
 `
 
 func main() {
-	input := []rune(code)
-	l := lexer.New(input)
-	tokens, err := l.Tokenize()
+	l := lexer.New([]rune(code))
+	toks, _ := l.Tokenize()
+
+	p := parser.New(toks)
+	program := p.ParseProgram()
+
+	jsonOutput, err := json.MarshalIndent(program, "", "  ")
 	if err != nil {
-		log.Fatal(err.Error())
+		fmt.Printf("Error marshalling to JSON: %v\n", err)
+		return
 	}
-
-	p := parser.New(tokens)
-
-	prog := p.ParseProgram()
-
-	if errs := p.Errors(); len(errs) != 0 {
-		log.Fatal(errors.Join(errs...))
-	}
-
-	fmt.Println(prog.String())
+	fmt.Println(string(jsonOutput))
 }
