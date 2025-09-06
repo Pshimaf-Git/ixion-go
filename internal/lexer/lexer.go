@@ -60,6 +60,8 @@ LOOP:
 		}
 	}
 
+	l.makeToken(token.EOF, token.EOF.String())
+
 	return l.tokens, nil
 }
 
