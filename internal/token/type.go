@@ -42,6 +42,7 @@ const (
 	IDENT
 
 	SEMICOLON
+	COMMA
 
 	FN
 	FOR
@@ -49,6 +50,8 @@ const (
 	CONST
 	PRINT
 	RETURN
+
+	EOF
 )
 
 var tokenTypes = [...]string{
@@ -86,6 +89,7 @@ var tokenTypes = [...]string{
 	IDENT: "IDENT",
 
 	SEMICOLON: "SEMICOLON",
+	COMMA:     "COMMA",
 
 	FN:     "FN",
 	FOR:    "FOR",
@@ -93,6 +97,8 @@ var tokenTypes = [...]string{
 	CONST:  "CONST",
 	PRINT:  "PRINT",
 	RETURN: "RETURN",
+
+	EOF: "EOF",
 }
 
 var keywords = map[string]TokenType{
@@ -118,6 +124,7 @@ var operators = map[rune]TokenType{
 	')': RPAREN,
 	'{': LBRACE,
 	'}': RBRACE,
+	',': COMMA,
 }
 
 var types = map[string]TokenType{
@@ -181,4 +188,20 @@ func IsKeyword(s string) (TokenType, bool) {
 func IsLangType(s string) (TokenType, bool) {
 	tt, ok := types[s]
 	return tt, ok
+}
+
+func GetTokenTypeFromString(s string) (TokenType, bool) {
+	tt, ok := types[s]
+	return tt, ok
+}
+
+func (t Token) IsType() bool {
+	switch t.Type {
+	case INT, INT8, INT16, INT32, INT64,
+		UINT, UINT8, UINT16, UINT32, UINT64,
+		STRING:
+		return true
+	default:
+		return false
+	}
 }
