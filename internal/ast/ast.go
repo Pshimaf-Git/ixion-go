@@ -28,6 +28,12 @@ type Expression interface {
 	expressionNode()
 }
 
+// TypeExpression represents a type expression
+type TypeExpression interface {
+	Expression
+	typeNode()
+}
+
 // Program is the root node of the AST.
 // It is a collection of statements.
 type Program struct {
@@ -52,10 +58,11 @@ func (p *Program) String() string {
 // --- Statements ---
 
 // VarStatement represents a variable declaration statement.
-// e.g., var x = 5;
+// e.g., var x = 5; or var x int = 5;
 type VarStatement struct {
 	Token token.Token // the token.VAR token
 	Name  *Identifier
+	Type  TypeExpression // Optional type annotation
 	Value Expression
 }
 
@@ -65,6 +72,9 @@ func (vs *VarStatement) String() string {
 	var out bytes.Buffer
 	out.WriteString(vs.TokenLiteral() + " ")
 	out.WriteString(vs.Name.String())
+	if vs.Type != nil {
+		out.WriteString(" " + vs.Type.String())
+	}
 	out.WriteString(" = ")
 	if vs.Value != nil {
 		out.WriteString(vs.Value.String())
@@ -74,10 +84,11 @@ func (vs *VarStatement) String() string {
 }
 
 // ConstStatement represents a constant declaration statement.
-// e.g., const x = 5;
+// e.g., const x = 5; or const x int = 5;
 type ConstStatement struct {
 	Token token.Token // the token.CONST token
 	Name  *Identifier
+	Type  TypeExpression // Optional type annotation
 	Value Expression
 }
 
@@ -87,6 +98,9 @@ func (cs *ConstStatement) String() string {
 	var out bytes.Buffer
 	out.WriteString(cs.TokenLiteral() + " ")
 	out.WriteString(cs.Name.String())
+	if cs.Type != nil {
+		out.WriteString(" " + cs.Type.String())
+	}
 	out.WriteString(" = ")
 	if cs.Value != nil {
 		out.WriteString(cs.Value.String())
@@ -217,6 +231,17 @@ func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Text }
 func (sl *StringLiteral) String() string       { return sl.Token.Text }
 
+// TypeLiteral represents a type literal (e.g., int, string)
+type TypeLiteral struct {
+	Token token.Token
+	Value string
+}
+
+func (tl *TypeLiteral) typeNode()            {}
+func (tl *TypeLiteral) expressionNode()      {}
+func (tl *TypeLiteral) TokenLiteral() string { return tl.Token.Text }
+func (tl *TypeLiteral) String() string       { return tl.Value }
+
 // PrefixExpression represents a unary operation.
 // e.g., -15
 type PrefixExpression struct {
@@ -257,11 +282,29 @@ func (ie *InfixExpression) String() string {
 	return out.String()
 }
 
+// FunctionParameter represents a function parameter with type
+type FunctionParameter struct {
+	Token token.Token
+	Name  *Identifier
+	Type  TypeExpression
+}
+
+func (fp *FunctionParameter) expressionNode()      {}
+func (fp *FunctionParameter) TokenLiteral() string { return fp.Token.Text }
+func (fp *FunctionParameter) String() string {
+	if fp.Type == nil {
+		return fp.Name.String()
+	}
+
+	return fp.Name.String() + " " + fp.Type.String()
+}
+
 // FunctionLiteral represents a function definition.
-// e.g., fn(x, y) { x + y; }
+// e.g., fn(x int, y int) int { x + y; }
 type FunctionLiteral struct {
 	Token      token.Token // The 'fn' token
-	Parameters []*Identifier
+	Parameters []*FunctionParameter
+	ReturnType TypeExpression
 	Body       *BlockStatement
 }
 
@@ -276,7 +319,11 @@ func (fl *FunctionLiteral) String() string {
 	out.WriteString(fl.TokenLiteral())
 	out.WriteString("(")
 	out.WriteString(strings.Join(params, ", "))
-	out.WriteString(") ")
+	out.WriteString(")")
+	if fl.ReturnType != nil {
+		out.WriteString(" " + fl.ReturnType.String())
+	}
+	out.WriteString(" ")
 	out.WriteString(fl.Body.String())
 	return out.String()
 }
