@@ -51,6 +51,7 @@ const (
 	PRINT
 	RETURN
 
+	ILLEGAL
 	EOF
 )
 
@@ -98,7 +99,8 @@ var tokenTypes = [...]string{
 	PRINT:  "PRINT",
 	RETURN: "RETURN",
 
-	EOF: "EOF",
+	ILLEGAL: "ILLEGAL",
+	EOF:     "EOF",
 }
 
 var keywords = map[string]TokenType{
@@ -172,7 +174,7 @@ func (tt TokenType) IsKeyword() bool {
 }
 
 func (tt TokenType) Valid() bool {
-	return int(tt) <= len(tokenTypes)-1
+	return int(tt) <= len(tokenTypes)-1 && tt != ILLEGAL
 }
 
 func IsOperator(char rune) (TokenType, bool) {
@@ -192,6 +194,10 @@ func IsLangType(s string) (TokenType, bool) {
 
 func GetTokenTypeFromString(s string) (TokenType, bool) {
 	tt, ok := types[s]
+	if !ok {
+		return ILLEGAL, ok
+	}
+
 	return tt, ok
 }
 
