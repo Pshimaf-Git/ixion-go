@@ -71,7 +71,9 @@ func (vs *VarStatement) TokenLiteral() string { return vs.Token.Text }
 func (vs *VarStatement) String() string {
 	var out bytes.Buffer
 	out.WriteString(vs.TokenLiteral() + " ")
-	out.WriteString(vs.Name.String())
+	if vs.Name != nil {
+		out.WriteString(vs.Name.String())
+	}
 	if vs.Type != nil {
 		out.WriteString(" " + vs.Type.String())
 	}
@@ -229,7 +231,7 @@ type StringLiteral struct {
 
 func (sl *StringLiteral) expressionNode()      {}
 func (sl *StringLiteral) TokenLiteral() string { return sl.Token.Text }
-func (sl *StringLiteral) String() string       { return sl.Token.Text }
+func (sl *StringLiteral) String() string       { return "\"" + sl.Value + "\"" }
 
 // TypeLiteral represents a type literal (e.g., int, string)
 type TypeLiteral struct {
@@ -348,5 +350,51 @@ func (ce *CallExpression) String() string {
 	out.WriteString("(")
 	out.WriteString(strings.Join(args, ", "))
 	out.WriteString(")")
+	return out.String()
+}
+
+type FunctionDeclaration struct {
+	Token      token.Token
+	Name       *Identifier
+	Parameters []*FunctionParameter
+	ReturnType TypeExpression
+	Body       *BlockStatement
+}
+
+func (fd *FunctionDeclaration) statementNode()       {}
+func (fd *FunctionDeclaration) TokenLiteral() string { return fd.Token.Text }
+func (fd *FunctionDeclaration) String() string {
+	var out bytes.Buffer
+	params := []string{}
+	for _, p := range fd.Parameters {
+		params = append(params, p.String())
+	}
+	out.WriteString(fd.TokenLiteral())
+	out.WriteString(" ")
+	out.WriteString(fd.Name.String())
+	out.WriteString("(")
+	out.WriteString(strings.Join(params, ", "))
+	out.WriteString(")")
+	if fd.ReturnType != nil {
+		out.WriteString(" " + fd.ReturnType.String())
+	}
+	out.WriteString(" ")
+	out.WriteString(fd.Body.String())
+	return out.String()
+}
+
+type AssignmentExpression struct {
+	Token token.Token
+	Left  Expression
+	Value Expression
+}
+
+func (ae *AssignmentExpression) expressionNode()      {}
+func (ae *AssignmentExpression) TokenLiteral() string { return ae.Token.Text }
+func (ae *AssignmentExpression) String() string {
+	var out bytes.Buffer
+	out.WriteString(ae.Left.String())
+	out.WriteString(" = ")
+	out.WriteString(ae.Value.String())
 	return out.String()
 }
